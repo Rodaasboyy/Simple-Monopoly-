@@ -1,0 +1,526 @@
+import random
+import time
+
+houses=['Go','Old Kent Road','Community Chest','Whitechapel Road','Income Tax','Kings Cross Station','The Angel, Islington','Chance','Euston Road','PentonVille Road','Jail','Pall Mall','Eletric Company','Whitehall','Northumberland Avenue','Marylebone Station','Bow Street','Community Chest','Marlborough Street','Vine Street','Free Parking','Strand','Chance','Fleet Street','Trafalgar Square','Fenchurch Street Station','Leicester Square','Coventry Street','Water Works','Picadilly','Go to Jail','Regent Street','Oxford Street','Community Chest','Bond Street','Liverpool Street Station','Chance','Park Lane','Super Tax','Mayfair']
+Brown=['Old Kent Road','Whitechapel Toad']
+n=position=0
+cp=1
+slp=2
+#Creates and keeps player data
+class Player:
+  def __init__(self, name, money=1500, houses=[], position=0,roll=0,double=0,stations=0,jail=0):
+    self.money = money
+    self.name = name
+    self.houses = houses
+    self.position = position
+    self.roll = roll
+    self.double=double
+    self.stations=stations
+    self.jail=jail
+
+#Creates and stores data for properties
+class Property:
+  def __init__(self, name, price=0, owner='', base_rent=0,house_price=0, house_count=0,house_index=0):
+    self.name=name
+    self.price=price
+    self.owner=owner
+    self.base_rent=base_rent
+    self.house_price=house_price
+    self.house_count=house_count
+    self.house_index=house_index
+#Creates and stores data for train stations
+class Station:
+  def __init__(self, name,price=200,owner=''):
+    self.name=name
+    self.price=price
+    self.owner=owner
+
+#Handles building
+def build(Player,house):
+  print("You landed on your property and can build houses!")
+  if house.house_count < 5:
+    print("You are still able to build",5-house.house_count,"houses!")
+    print("Do you wish to build?\nYou will get an increase in rent of",house.house_index,"per house\n Your balance is:",Player.money,"\nAnd each house costs",house.house_price,"\n1-Yes\n2-No")
+    yorn=int(input("Decision:"))
+    if yorn==1: 
+       print("How many houses do you wish to build?(Hotel =",5-house.house_count,")")
+       i=int(input("Build count:"))
+       if i * house.house_price < Player.money and i<= 5-house.house_count:
+         Player.money -= i*house.house_price
+         if i < 5-house.house_count:
+           print("You built",i,"houses!\nNew balance:",Player.money)
+           house.house_count = i
+         else:
+           print("You built an Hotel!\nNew balance:",Player.money)
+           house.house_count  += i
+       else:
+         print("Insuficient funds or invalid number of houses")
+    elif yorn==2:
+      print("Skiping the building process")
+
+#Handles paying rents in houses
+def charge(Player,house):
+  if house.house_count==0:
+    print("This property has no houses.\nThe rent is",house.base_rent)
+    house.owner.money += house.base_rent
+    Player.money -= house.base_rent
+    print(house.owner.name,"got",house.base_rent,"from",Player.name)
+    print(house.owner.name,"new balance:",house.owner.money,"\n",Player.name,"new balance:",Player.money)
+
+  else:
+     print("This property has",house.house_count,"houses")
+     house.owner.money+= house.house_count*house.house_index
+     Player.money -= house.house_count*house.house_index
+     print(house.owner.name,"got",house.house_count*house.house_index,"from",Player.name)
+     print(house.owner.name,"new balance:",house.owner.money,"\n",Player.name,"new balance:",Player.money)
+
+
+#Handles the buying process
+def buy(Player,house): 
+   print("\nThis property has no owner!\nIt costs",house.price," \nYou currently got:", Player.money )
+   decision=input("Do you wish to buy it?\n 1-Yes \n 2-No \n Decision:")
+   if decision == '1':
+      if Player.money > house.price:
+        print("You now own:",house.name,"!")
+        Player.money -= house.price
+        Player.houses.append(house.name)
+        house.owner = Player
+        
+      else:
+        decision='2'
+        print("You don't have enough money for this property, it costs:", house.price, ", and you got:", Player.money)  
+        
+   elif decision == '2':
+        print("Skiping this property")
+        
+   else:
+        print("Not a valid option")
+       
+        
+   return decision
+
+#Handles logic inside houses
+def House(Player,house):
+  if house.owner=='':
+    buy(Player,house)  
+  elif house.owner != '' and house.owner != Player:
+    charge(Player,house)  
+    time.sleep(slp+2)   
+  elif house.owner == Player:
+    build(Player,house)
+  time.sleep(slp)
+    
+#Rolls the dice   
+def Roll_Dice(Player):
+  if Player.jail == 0:
+    dice1 = random.randint(1,6)
+    dice2 = random.randint(1,6)
+    Total=dice1+dice2
+    Player.roll = Total 
+    print("\nYou got", dice1 ,"and", dice2)
+    Player.double=0
+    if dice1 == dice2: 
+       print("That's a double!\nYou get to play again!") 
+       Player.double=1  
+  else:
+    Player.roll=0
+    print("You're under arrest, no dice roll for you!")
+  
+
+#To know the current position 
+def Position(Player):
+ Player.position += Player.roll
+ if Player.position > 39:
+    Player.position -= 39
+    Player.money += 200
+    print("\nYou passed go and got 200!\nCurrent balance:",Player.money)
+ print("You landed on",houses[Player.position])
+
+#Old Kent Road(pos.1)
+okr=Property("Old Kent Road", 60,base_rent=2,house_price=50,house_index=50)
+#Whitechapel Road(pos.3)  
+wr=Property("Whitechapel Road", 60, base_rent=4,house_price=50,house_index=90)  
+#The angel , Islington(pos.6)
+tai=Property("The Angel, Islington",100, base_rent=6, house_price=50,house_index=110)
+#Euston Road(pos.8)
+er=Property("Euston Road",100, base_rent=6, house_price=50,house_index=110)
+#Pentonville Road(pos.9)
+pr=Property("Pentonville Road",120, base_rent=8, house_price=50,house_index=120)
+#Pall Mall(pos.11)
+pm=Property("Pall Mall",140, base_rent=10,house_price=100,house_index=150)
+#Whitehall(pos.13)
+w=Property("Whitehall",140, base_rent=10,house_price=100,house_index=150)
+#Northumberland Avenue(pos.14)
+na=Property("Northumberland Avenue",160, base_rent=12,house_price=100,house_index=180)
+#Bow Street(pos.16)
+bs=Property("Bow Street",180, base_rent=14,house_price=100,house_index=190)
+#Marlborough Street(pos.18)
+ms=Property("Marlborough Street",180, base_rent=14,house_price=100,house_index=190)
+#Vine Street(pos.19)
+vs=Property("Vine Street",200, base_rent=16,house_price=100,house_index=200)
+#Strand(pos.21)
+s=Property("Strand",220, base_rent=18,house_price=150,house_index=210)
+#Fleet Street(pos.23)
+fs=Property("Fleet Street",220, base_rent=18,house_price=150,house_index=210)
+#Trafalgar Square(pos.24)
+ts=Property("Trafalgar Square",240, base_rent=20,house_price=150,house_index=220)
+#Leicester Square(pos.26)
+ls=Property("Leicester Square",260, base_rent=22,house_price=150,house_index=230)
+#Coventry Street(pos.27)
+cs=Property("Coventry Street",260, base_rent=22,house_price=150,house_index=230)
+#Piccadilly(pos.29)
+pic=Property("Piccadilly",280, base_rent=24,house_price=150,house_index=250)
+#Regent Street(pos.31)
+rs=Property("Regent Street",300, base_rent=26,house_price=200,house_index=255)
+#Oxford Street
+os=Property("Oxford Street",300, base_rent=26,house_price=200,house_index=255)
+#Bond Street
+bond=Property("Bond Street",320, base_rent=28,house_price=200,house_index=280)
+#Park Lane
+pl=Property("Park Lane",350, base_rent=35,house_price=200,house_index=300)
+#Mayfait
+m=Property("Mayfair",400, base_rent=50,house_price=200,house_index=400)
+
+
+#Jail(pos.10)
+def Jail(Player):
+  print("You're under arrest!")
+  Player.jail=1
+  print("You currently have:",Player.money)
+  decision=input("Do you wish to:\n1-Try to get a double\n2-Pay 50\n Decision:")
+  if decision=='1':
+    Player.double = 0
+    dice1 = random.randint(1,6)
+    dice2 = random.randint(1,6)
+    print("You rolled the dice and got",dice1,"and",dice2)
+    if dice1==dice2:
+      print("That's a double!\nYou get out of jail free!")
+      Player.jail=0
+    else:
+      print("Guess you're spending one more night in jail")
+      Player.jail=1
+  elif decision=='2':
+   if Player.money>50:
+     Player.money -= 50
+     print("You got out of jail and now got:",Player.money)
+     Player.jail=0
+  else:
+    print("You're broke! Not enough money to bail out")
+    Player.jail=1
+    
+    
+
+ec=Property("Eletric Company", 150)
+#Eletric Company(pos.12)
+def Electric_Company(Player):
+  if ww.owner==Player:
+    print("\nYou already own Water Works")
+  else:
+    print("\nYou don't own Water Works")
+ 
+  if ec.owner == '':
+    buy(Player,ec)
+       
+  elif ec.owner != '' and ec.owner != Player:
+    if 'Water Works' in Player.houses:
+        print("\nThe rent is 10 times the roll you got(", Player.roll*10,")")
+        ec.owner.money += Player.roll*10
+        print(ec.owner.name,"'s new balance is:", ec.owner.money)
+ 
+    else:
+        print("\nThe rent 4 times the roll you got(", Player.roll*4,")")
+        ec.owner.money += Player.roll*4
+        print(ec.owner.name, "'s new balance is:", ec.owner.money)
+ 
+  elif ec.owner == Player:
+        print("\nYou landed on your property!")
+
+
+station1=Station('Kings Cross Station')
+station2=Station('Marylebone Station')
+station3=Station('Fenchurch Street Station')
+station4=Station('Liverpool Street Station')
+#Stations (pos.5,15,25,35)
+def Station(Player,station):
+   if station.owner=='':
+       print("\nYou currently own",Player.stations,"train stations") 
+       decision=buy(Player,station)
+       if decision=='1':
+         Player.stations +=1
+     
+   elif station.owner == Player:
+     print("You landed on your property!")  
+  
+   else:
+     print(station.owner.name,"has",station.owmer.stations)
+     if station.owner.stations==1:
+       print("You need to pay 25 to", station.owner.name)
+       Player.money -= 25
+       station.owner.money += 25
+       print(Player.name,"payed to", station.owner.name)
+       print(Player.name,"now has:",Player.money)
+       print(station.owner.name,"now has:",station.owner.money)
+       time.sleep(slp)
+    
+     elif station.owner.stations==2:
+       print("You need to pay 50 to", station.owner.name)
+       Player.money -= 50
+       station.owner.money += 50
+       print(Player.name,"payed to", station.owner.name)
+       print(Player.name,"now has:",Player.money)
+       print(station.owner.name,"now has:",station.owner.money)
+       time.sleep(slp)
+   
+     elif station.owner.stations==3:
+       print("You need to pay 100 to", station.owner.name)
+       Player.money -= 100
+       station.owner.money += 100
+       print(Player.name,"payed to", station.owner.name)
+       print(Player.name,"now has:",Player.money)
+       print(station.owner.name,"now has:",station.owner.money)
+       time.sleep(slp)
+       
+     elif station.owner.stations==4:
+       print("You need to pay 200 to", station.owner.name)
+       Player.money -= 200
+       station.owner.money += 200
+       print(Player.name,"payed to", station.owner.name)
+       print(Player.name,"now has:",Player.money)
+       print(station.owner.name,"now has:",station.owner.money)
+       time.sleep(slp)   
+   time.sleep(slp+2) 
+#Water Works(pos.28)
+ww=Property("Water Works",150)
+def Water_Works(Player):
+  if ec.owner==Player:
+    print("\nYou already own the Eletric Company")
+  else:
+    print("\nYou don't own the Eletric Company")
+ 
+  if ww.owner == '':
+    buy(Player,ww)
+       
+  elif ww.owner != '' and ww.owner != Player:
+    if 'Eletric Company' in Player.houses:
+        print("\nThe rent is 10 times the roll you got(", Player.roll*10,")")
+        ww.owner.money += Player.roll*10
+        print(ww.owner.name,"'s new balance is:", ww.owner.money)
+ 
+    else:
+        print("\nThe rent 4 times the roll you got(", Player.roll*4,")")
+        ww.owner.money += Player.roll*4
+        print(ww.owner.name, "'s new balance is:", ww.owner.money)
+ 
+  elif ww.owner == Player:  
+        print("\nYou landed on your property!")
+
+
+  
+   
+#Game start
+#Set players
+j=0
+while j==0:
+  n_p=int(input("Number of players(min.1 player and max. 4 players):"))
+  if n_p == 1:
+    player1 = Player(input("Enter the name of the loney player:"))
+    player2 =  Player("-",money=0)
+    player3 =  Player("-",money=0)
+    player4 =  Player("-",money=0)
+    p=1
+    j=1
+
+  elif n_p == 2:
+    player1 = Player(input("Enter the first player's name:"))
+    player2 = Player(input("Enter the second player's name:"))
+    player3 =  Player("-",money=0)
+    player4 =  Player("-",money=0)
+    p=2
+    j=1
+
+  elif n_p == 3:
+    player1 = Player(input("Enter the first player's name:"))
+    player2 = Player(input("Enter the second player's name:"))
+    player3 = Player(input("Enter the third player's name:"))
+    player4 =  Player("-",money=0)
+    p=3
+    j=1
+
+  elif n_p == 4:
+    player1 = Player(input("Enter the first player's name:"))
+    player2 = Player(input("Enter the second player's name:"))
+    player3 = Player(input("Enter the third player's name:"))
+    player4 = Player(input("Enter the fourth player's name:"))
+    p=4
+    j=1
+  
+  else:
+     print("Invalid number of players\n")
+   
+
+#Gameplay
+Player=player1
+while Player.money>0:
+  if   cp==1:
+    Player=player1
+    print("\n\n  ",Player.name, "Playing")
+    Roll_Dice(Player)  
+  elif cp==2:
+    Player=player2
+    print("\n\n  ",Player.name, "Playing")
+    Roll_Dice(Player)
+  elif cp==3:
+    Player=player3
+    print("\n\n  ",Player.name, "Playing")
+    Roll_Dice(Player)
+  elif cp==4:
+    Player=player4 
+    print("\n\n  ",Player.name, "Playing")
+    Roll_Dice(Player)
+       
+  if Player.double == 1:
+      cp-=1 
+  cp += 1
+  if  cp>p:
+    cp = cp-p 
+  
+  #Position(Player)
+  Player.position=30
+  time.sleep(slp)
+
+  if Player.position == 0:
+    Player.money += 200
+    print("You passed Go and got 200!\nYour new balance is:",Player.money)
+    time.sleep(slp)
+#Brown Neighborhood 
+  elif Player.position == 1:
+    print("\nFirst Brown")
+    House(Player,okr) 
+  elif Player.position == 3:
+    print("\nSecond Brown")
+    House(Player,wr)
+    
+#Light Blue Neighborhood
+  elif Player.position==6:
+    print("\nFirst Light Blue")
+    House(Player,tai)
+  elif Player.position==8:
+    print("\nSecond Light Blue")
+    House(Player,er)
+  elif Player.position==9:
+    print("\nThird Light Blue")
+    House(Player,pr)
+
+#Pink Neighborhood
+  elif Player.position==11:
+    print("\nFirst Pink")
+    House(Player,pm)
+  elif Player.position==13: 
+    print("\nSecond Pink")
+    House(Player,w) 
+  elif Player.position==14:
+    print("\nThird Pink")
+    House(Player,na)
+ 
+#Orange Neighborhood
+  elif Player.position==16:
+    print("\nFirst Orange")
+    House(Player,bs)
+  elif Player.position==18:
+    print("\nSecond Orange")
+    House(Player,ms)
+  elif Player.position==19:
+    print("\nThird Orange")
+    House(Player,vs)
+
+#Red Neighborhood
+  elif Player.position==21:
+    print("\nFirst Red")
+    House(Player,s)
+  elif Player.position==23:
+    print("\nSecond Red")
+    House(Player,fs)
+  elif Player.position==24:
+    print("\nThird Red")
+    House(Player,ts)
+
+#Yellow Neighborhood
+  elif Player.position==26:
+    print("\nFirst Yellow")
+    House(Player,ls)
+  elif Player.position==27:
+    print("\nSecond Yellow")
+    House(Player,cs)
+  elif Player.position==29:
+    print("\nThird Yellow")
+    House(Player,pic)
+
+#Green Neighborhood
+  elif Player.position==31:
+    print("\nFirst Green")
+    House(Player,rs)
+  elif Player.position==32:
+    print("\nSecond Green")
+    House(Player,os)
+  elif Player.position==34:
+    print("\nThird Green")
+    House(Player,bond)
+    
+#Dark Blue Neighborhood
+  elif Player.position==37:
+    print("\nFirst Dark Blue")
+    House(Player,pl)
+  elif Player.position==39:
+    print("\nSecond Dark Blue")
+    House(Player,m)
+
+#Taxes
+  elif Player.position==4:
+    print("You need to pay 200")
+    Player.money -= 200
+    print("Your balance is:", Player.money)
+    time.sleep(slp)
+  elif Player.position == 38:
+    print("You need to pay 100")
+    Player.money -= 100
+    print("Your balance is:", Player.money)
+    time.sleep(slp)
+    
+#Stations 
+  elif Player.position==5:
+    Station(Player,station1)
+  elif Player.position==15:
+    Station(Player,station2)
+  elif Player.position==25:
+    Station(Player,station3)
+  elif Player.position==35:
+    Station(Player,station4)
+  
+#Jail
+  elif Player.position==10:
+    if Player.jail==0:
+     print("You passed Jail as a visitor!\nWave at the criminals!")
+    if Player.jail==1:
+     Jail(Player)
+  elif Player.position == 30:
+    Player.position=10
+    Jail(Player)
+    
+#Services 
+  elif Player.position ==12:
+    Electric_Company(Player)
+    time.sleep(slp)  
+  elif Player.position == 28:
+    Water_Works(Player)
+    time.sleep(slp)
+    
+print(Player.name,"ran out of money, and lost!")
+print("----------Stats-------------")
+print(player1.name,"- score:",5*player1.money+150*len(player1.houses))
+print(player2.name,"- score:",5*player2.money+150*len(player2.houses))
+print(player3.name,"- score:",5*player3.money+150*len(player3.houses))
+print(player4.name,"- score:",5*player4.money+150*len(player4.houses))
+
+print("-------End of the game-------")
+time.sleep(120)
+exit()
